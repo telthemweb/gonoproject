@@ -1,0 +1,150 @@
+﻿@page "/provinces"
+@using Application.Dto
+@inject IProvinceService _service;
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@attribute [StreamRendering]
+@attribute [Authorize]
+
+<MudPaper Class="mt-2 mb-2" Outlined="true">
+    <MudBreadcrumbs Items="_items">
+        <SeparatorTemplate>
+            <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Size="Size.Small" />
+        </SeparatorTemplate>
+    </MudBreadcrumbs>
+</MudPaper>
+
+@if (provinces == null)
+{
+    <MudSkeleton Width="100%" Height="30px" />
+    <MudSkeleton Width="100%" Height="30px" />
+    <MudSkeleton Width="100%" Height="30px" />
+}
+else
+{
+    <MudTable Outlined="true" Items="@filteredPaymentItems" Dense="@dense" Hover="@hover" Bordered="@bordered" Striped="@striped">
+        <ToolBarContent>
+            <MudTextField @bind-Value="searchString" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            <MudSpacer />
+            <MudButton Variant="Variant.Filled" Size="Size.Small" Class="rounded-5" StartIcon="@Icons.Material.Outlined.Add" Color="Color.Primary" OnClick="OpenDialog">Add New</MudButton>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh>Name</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Name">@context.Name</MudTd>
+            <MudTd class="d-flex flex-row-reverse">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Info" aria-label="edit" OnClick="() => EditDialog(context)"></MudIconButton>
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" aria-label="delete" OnClick="() => DeleteRecord(context)"></MudIconButton>
+            </MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
+}
+
+@code {
+    private List<BreadcrumbItem> _items = new()
+    {
+        new BreadcrumbItem("Home", href: "/Home"),
+        new BreadcrumbItem("Provinces", href: null, disabled: true)
+    };
+
+    private bool dense = false;
+    private bool hover = true;
+    private bool striped = false;
+    private bool bordered = false;
+
+    private List<Province>? provinces;
+    private ProvinceModifyDto dto = new();
+    private string searchString = "";
+    private Province? selectedItem;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetData();
+    }
+
+    private IEnumerable<Province> filteredPaymentItems => provinces?.Where(item => FilterFunc(item, searchString)) ?? Enumerable.Empty<Province>();
+
+    private bool FilterFunc(Province element, string searchString)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+        if (element.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        return false;
+    }
+
+    private async Task OpenDialog()
+    {
+        var title = "New Province";
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var parameters = new DialogParameters
+        {
+            { nameof(Add.dto), new ProvinceModifyDto() }
+        };
+
+        var dialog = await DialogService.ShowAsync<Add>(title, parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Cancelled)
+        {
+            if (bool.TryParse(result.Data.ToString(), out bool success) && success)
+            {
+                await GetData();
+            }
+        }
+    }
+
+    private async Task EditDialog(Province statuse)
+    {
+        var title = "Update Province";
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var parameters = new DialogParameters
+        {
+            { nameof(Add.dto), new ProvinceModifyDto { Id = statuse.Id, Name = statuse.Name } }
+        };
+
+        var dialog = await DialogService.ShowAsync<Add>(title, parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Cancelled)
+        {
+            if (bool.TryParse(result.Data.ToString(), out bool success) && success)
+            {
+                await GetData();
+            }
+        }
+    }
+
+    private async Task DeleteRecord(Province statuse)
+    {
+        var result = await DialogService.ShowMessageBox(
+            "Warning",
+            "Deleting cannot be undone!",
+            yesText: "Delete!", cancelText: "Cancel");
+
+        if (result == true)
+        {
+            var response = await _service.Delete(statuse.Id);
+            if (response.Status == ResponseStatus.SUCCESS)
+            {
+                Snackbar.Add(response.Message, Severity.Success);
+                await GetData();
+            }
+            else
+            {
+                Snackbar.Add(response.Message, Severity.Error);
+            }
+        }
+    }
+
+    private async Task GetData()
+    {
+        var response = await _service.GetAll();
+        provinces = response;
+        StateHasChanged();
+    }
+}

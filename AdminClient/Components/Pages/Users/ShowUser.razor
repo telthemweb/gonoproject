@@ -1,0 +1,200 @@
+﻿@page "/user/{id}"
+@using Application.Dto.Users
+@inject IApplicationUserService _service
+@inject IDialogService DialogService;
+@inject IRoleService _roleservice;
+@inject ISnackbar Snackbar
+@attribute [StreamRendering]
+@attribute [Authorize]
+<MudPaper Class=" mt-2 mb-2" Outlined="true">
+    <MudBreadcrumbs Items="_items">
+        <SeparatorTemplate>
+            <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Size="Size.Small" />
+        </SeparatorTemplate>
+    </MudBreadcrumbs>
+</MudPaper>
+@if (user == null)
+{
+    <MudSkeleton />
+    <MudSkeleton />
+    <MudSkeleton />
+    <MudSkeleton />
+    <MudSkeleton />
+    <MudSkeleton />
+}
+else
+{
+
+    <MudCard>
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h6">System User</MudText>
+            </CardHeaderContent>
+            
+        </MudCardHeader>
+        <MudCardContent>
+            <MudSimpleTable Outlined="true" Dense="true">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Surname</th>
+                        <th>Email</th>
+                        <th>Gender</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                      <td>
+                          @user.Name
+                      </td>
+                        <td>
+                            @user.Surname
+                        </td>
+                        <td>
+                            @user.Email
+                        </td>
+                        <td>
+                            @user.Gender
+                        </td>
+                        <td>
+                            @user.Status
+                        </td>
+                  </tr>
+                </tbody>
+            </MudSimpleTable>
+        </MudCardContent>
+    </MudCard>
+    <MudCard Class="mt-3">
+     <MudCardHeader>
+            <CardHeaderContent><MudText Typo="Typo.h6">Assigned Roles</MudText> </CardHeaderContent>
+     </MudCardHeader>
+     <MudCardContent>
+         <MudSimpleTable>
+             <thead>
+                 <tr>
+                     <th>
+                         Name
+                     </th>
+                     <td>Status</td>
+                     <td>Action</td>
+                 </tr>
+             </thead>
+             <tbody>
+                    @if(roles != null)
+                    {
+                        @if (roles.Count() > 0)
+                        {
+                            @foreach (var item in roles)
+                            {
+                             <tr>
+                                 <td>@item.Name</td>
+                                 <td>
+                                        @if (item.applicationuserroles.Where(q=>q.UserId==id).FirstOrDefault() != null)
+                                        {
+                                            <MudText Color="Color.Success">Assigned</MudText>
+                                        }
+                                        else
+                                        {
+                                            <MudText Color="Color.Error">Not Assigned</MudText>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.applicationuserroles.Where(q => q.UserId == id).FirstOrDefault() != null)
+                                        {
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" aria-label="delete" OnClick="()=>RemoveRole(item)"></MudIconButton>
+                                        }
+                                        else
+                                        {
+                                            <MudIconButton Icon="@Icons.Material.Filled.Check" Color="Color.Success" aria-label="delete" OnClick="()=>AssignRole(item)"></MudIconButton>
+
+                                        }
+                                    </td>
+
+                             </tr>
+                            } 
+                        }
+                    }
+                </tbody>
+         </MudSimpleTable>
+     </MudCardContent>
+    </MudCard>
+}
+
+@code {
+    private List<BreadcrumbItem> _items = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem("Home", href: "/Home"),
+          new BreadcrumbItem("Users", href: "/users"),
+        new BreadcrumbItem("Application User", href: null, disabled: true)
+    };
+
+    private ApplicationUser? user { get; set; }
+    private ModifyUserDto dto { get; set; } = new();
+    [Parameter]
+    public string id { get; set; } = string.Empty;
+
+    private List<Role> roles { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var response = await _service.GetById(id);
+        user = response;
+        roles = await _roleservice.GetRoleByUserId(id);
+
+        base.OnInitializedAsync();
+
+
+    }
+
+
+
+
+    private async void AssignRole(Role record)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Warning",
+            $"Are you sure you want to assign role {record.Name} to user",
+            yesText: "Yes Assign!", cancelText: "Cancel");
+        if ((bool)result)
+        {
+            var response = await _service.AssignRole(id,record.Id);
+            if (response.Status == ResponseStatus.SUCCESS)
+            {
+                Snackbar.Add(response.Message, Severity.Success);
+                StateHasChanged();
+
+            }
+            else
+            {
+                Snackbar.Add(response.Message, Severity.Error);
+            }
+        }
+
+    }
+    private async void RemoveRole(Role record)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Warning",
+            $"Are you sure you want to remove role {record.Name} from user",
+            yesText: "Yes Assign!", cancelText: "Cancel");
+        if ((bool)result)
+        {
+            var response = await _service.RemoveRole(id, record.Id);
+            if (response.Status == ResponseStatus.SUCCESS)
+            {
+                Snackbar.Add(response.Message, Severity.Success);
+                StateHasChanged();
+
+            }
+            else
+            {
+                Snackbar.Add(response.Message, Severity.Error);
+            }
+        }
+
+    }
+
+
+}

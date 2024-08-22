@@ -1,0 +1,36 @@
+﻿<MudNavMenu Color="Color.Dark" Rounded="false" Class="pa-1" Bordered="true">
+    <MudNavLink Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard" Href="/Home" IconColor="Color.Inherit">Dashboard</MudNavLink>
+    <MudDivider />
+    @if (modules != null && modules.Count() > 0)
+    {
+        @foreach (var item in modules)
+        {
+            <AuthorizeView Roles="@item.AccessName">
+                <Authorized>
+                    <MudNavGroup class="pt-2 pb-2" Title="@item.Name" Icon="@item.Icon" IconColor="Color.Inherit" Expanded="false">
+                        @foreach (var itm in item.submodules)
+                        {
+                            <AuthorizeView Roles="@itm.AccessName">
+                                <Authorized Context="context2">
+                                    <MudNavLink Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.LocalLibrary" Href="@itm.Url" IconColor="Color.Inherit">@itm.Name</MudNavLink>
+                                </Authorized>
+                            </AuthorizeView>
+
+                        }
+                    </MudNavGroup>
+                    <MudDivider />
+                </Authorized>
+            </AuthorizeView>
+        }
+
+    }
+
+</MudNavMenu>
+@code {
+    [Parameter]
+    public List<Systemmodule> modules { get; set; }
+
+
+
+}
+

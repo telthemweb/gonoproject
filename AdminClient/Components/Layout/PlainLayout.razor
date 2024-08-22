@@ -1,0 +1,20 @@
+﻿@inherits LayoutComponentBase
+
+<PageTitle>Hybrid Visitor Portal</PageTitle>
+
+<MudThemeProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="1" Color="Color.Transparent">
+        <MudText Typo="Typo.h5" Class="ml-3">HVSM</MudText>
+        <MudSpacer />
+        <MudButton Href="/Login"
+           Variant="Variant.Text"
+           StartIcon="@Icons.Material.Outlined.Login"
+           Color="Color.Secondary"
+           Style="text-transform:none">Login</MudButton>
+    </MudAppBar>
+    <MudMainContent>
+        @Body
+    </MudMainContent>
+</MudLayout>

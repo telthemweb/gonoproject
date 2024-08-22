@@ -1,0 +1,171 @@
+﻿@page "/countries"
+@using Application.Dto
+@inject INationalityService _service;
+@inject IDialogService DialogService;
+@inject ISnackbar Snackbar
+@attribute [StreamRendering]
+@attribute [Authorize]
+<MudPaper Class=" mt-2 mb-2" Outlined="true">
+    <MudBreadcrumbs Items="_items">
+        <SeparatorTemplate>
+            <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Size="Size.Small" />
+        </SeparatorTemplate>
+    </MudBreadcrumbs>
+</MudPaper>
+@if (countries == null)
+{
+    <MudSkeleton Width="100%" Height="30px" />
+    <MudSkeleton Width="100%" Height="30px" />
+    <MudSkeleton Width="100%" Height="30px" />
+}
+else
+{
+
+    <MudTable Outlined="true" Items="@filteredPaymentItems" Dense="@dense" Hover="@hover" Bordered="@bordered" Striped="@striped">
+        <ToolBarContent>
+            <MudTextField @bind-Value="searchString" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            <MudSpacer />
+            <MudButton Variant="Variant.Filled" Size="Size.Small" Class="rounded-5" StartIcon="@Icons.Material.Outlined.Add" Color="Color.Primary" OnClick="OpenDialog">Add New</MudButton>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh>Code</MudTh>
+            <MudTh>Name</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Code">@context.Code</MudTd>
+            <MudTd DataLabel="Name">@context.Name</MudTd>
+            <MudTd class="d-flex flex-row-reverse">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Info" aria-label="edit" OnClick="() => EditDialog(context)"></MudIconButton>
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" aria-label="delete" OnClick="() => DeleteRecord(context)"></MudIconButton>
+            </MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
+}
+
+@code {
+    private List<BreadcrumbItem> _items = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem("Home", href: "/Home"),
+        new BreadcrumbItem("Nationalities", href: null, disabled: true)
+    };
+    private bool dense = false;
+    private bool hover = true;
+    private bool striped = false;
+    private bool bordered = false;
+    private List<Nationality>? countries { get; set; }
+    private NationalityModifyDto dto { get; set; } = new();
+    private string searchString = "";
+    private Nationality? selectedItem;
+
+    private IEnumerable<Nationality> filteredPaymentItems => countries?.Where(item => FilterFunc(item, searchString)) ?? Enumerable.Empty<Nationality>();
+
+    private bool FilterFunc(Nationality element, string searchString)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+        if (element.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        else if (element.Code.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        return false;
+    }
+
+
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var response = await _service.GetAll();
+        countries = response;
+
+        base.OnInitializedAsync();
+
+
+    }
+
+    private async void OpenDialog()
+    {
+        var title = "New Country";
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var parameters = new DialogParameters<Add>
+        {
+                {x=>x.dto,dto}
+        };
+        var dialog = await DialogService.ShowAsync<Add>(title, parameters, options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            bool.TryParse(result.Data.ToString(), out bool success);
+            if (success)
+            {
+                await GetData();
+            }
+        }
+    }
+
+    private async void EditDialog(Nationality country)
+    {
+
+        if (country != null)
+        {
+            dto.Id = country?.Id;
+            dto.Code = country?.Code;
+            dto.Name = country?.Name;
+
+        }
+        var title = " Update Country";
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var parameters = new DialogParameters<Add>
+        {
+                {x=>x.dto,dto}
+        };
+        var dialog = await DialogService.ShowAsync<Add>(title, parameters, options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            bool.TryParse(result.Data.ToString(), out bool success);
+            if (success)
+            {
+                await GetData();
+            }
+        }
+    }
+    private async void DeleteRecord(Nationality record)
+    {
+        if (record is null)
+        {
+            throw new ArgumentNullException(nameof(record));
+        }
+
+        bool? result = await DialogService.ShowMessageBox(
+        "Warning",
+            "Deleting can not be undone!",
+            yesText: "Delete!", cancelText: "Cancel");
+        if ((bool)result)
+        {
+            var response = await _service.Delete(record.Id);
+            if (response.Status == ResponseStatus.SUCCESS)
+            {
+                Snackbar.Add(response.Message, Severity.Success);
+                await GetData();
+            }
+            else
+            {
+                Snackbar.Add(response.Message, Severity.Error);
+            }
+        }
+
+    }
+
+    private async Task GetData()
+    {
+        countries = await _service.GetAll();
+        StateHasChanged();
+    }
+}

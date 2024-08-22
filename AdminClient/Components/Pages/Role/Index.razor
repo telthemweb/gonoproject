@@ -1,0 +1,182 @@
+﻿@page "/systemroles"
+@using Application.Dto.Roles
+@using Application.Dto.Systemmodules
+@inject IRoleService _service
+@inject IDialogService DialogService;
+@inject ISnackbar Snackbar
+@inject NavigationManager _nav
+@attribute [StreamRendering]
+@attribute [Authorize]
+<MudPaper Class=" mt-2 mb-2" Outlined="true">
+    <MudBreadcrumbs Items="_items">
+        <SeparatorTemplate>
+            <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Size="Size.Small" />
+        </SeparatorTemplate>
+    </MudBreadcrumbs>
+</MudPaper>
+@if (roles == null)
+{
+    <MudSkeleton />
+    <MudSkeleton />
+    <MudSkeleton />
+    <MudSkeleton />
+    <MudSkeleton />
+    <MudSkeleton />
+}
+else
+{
+    
+    <MudCard>
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h6">System roles</MudText>
+            </CardHeaderContent>
+            <CardHeaderActions>
+                <MudButton Variant="Variant.Filled" Size="Size.Small" Class="rounded-5" StartIcon="@Icons.Material.Outlined.Add" Color="Color.Primary" OnClick="()=>OpenDialog()">Add New</MudButton>
+            </CardHeaderActions>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudSimpleTable Outlined="true" Dense="true">
+                <thead>
+                    <tr>
+                        <th>
+                            Name
+                        </th>
+                        <th>
+
+                        </th>
+                     </tr>
+                </thead>
+               <tbody>
+                    @if (roles.Count() > 0)
+                    {
+                       @foreach (var item in roles)
+                        {
+                         <tr>
+                             <td>
+                                 @item.Name
+                                 </td>
+                                 <td>
+                                    <div class="d-flex flex-row-reverse">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Info" aria-label="edit" OnClick="()=>EditDialog(item)"></MudIconButton>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" aria-label="delete" OnClick="()=>DeleteRecord(item)"></MudIconButton>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Search" Size="Size.Small" Color="Color.Primary" aria-label="delete" OnClick="()=>ShowRecord(item)"></MudIconButton>
+                                 </div>
+                             </td>
+                           
+                       
+                         </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="2">
+                                <MudText Color="Color.Error" Align="Align.Center">No records found</MudText>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+        </MudCardContent>
+    </MudCard>
+}
+
+@code {
+    private List<BreadcrumbItem> _items = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem("Home", href: "/Home"),
+        new BreadcrumbItem("System roles", href: null, disabled: true)
+    };
+
+    private List<Role>? roles { get; set; }
+    private ModifyRoleDto dto { get; set; } = new();
+    protected override async Task OnInitializedAsync()
+    {
+        var response = await _service.GetAll();
+        roles = response;
+
+        base.OnInitializedAsync();
+
+
+    }
+
+    private async void OpenDialog()
+    {
+        var title = "New Role";
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var parameters = new DialogParameters<ModifyRoleComponent>
+        {
+                {x=>x.dto,dto}
+        };
+        var dialog = await DialogService.ShowAsync<ModifyRoleComponent>(title, parameters, options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            bool.TryParse(result.Data.ToString(), out bool success);
+            if (success)
+            {
+                await GetData();
+            }
+        }
+    }
+
+    private async void EditDialog(Role role)
+    {
+
+        if (role != null)
+        {
+            dto.Id = role?.Id;
+            dto.Name = role?.Name;
+
+        }
+        var title = " Update Role";
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var parameters = new DialogParameters<ModifyRoleComponent>
+        {
+                {x=>x.dto,dto}
+        };
+        var dialog = await DialogService.ShowAsync<ModifyRoleComponent>(title, parameters, options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            bool.TryParse(result.Data.ToString(), out bool success);
+            if (success)
+            {
+                await GetData();
+            }
+        }
+    }
+    private async void DeleteRecord(Role record)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Warning",
+            "Deleting can not be undone!",
+            yesText: "Delete!", cancelText: "Cancel");
+        if (result != null)
+        {
+            var response = await _service.Delete(record.Id);
+            if (response.Status == ResponseStatus.SUCCESS)
+            {
+                Snackbar.Add(response.Message, Severity.Success);
+                await GetData();
+            }
+            else
+            {
+                Snackbar.Add(response.Message, Severity.Error);
+            }
+        }
+
+    }
+    private async Task ShowRecord(Role role)
+    {
+        _nav.NavigateTo("/systemrole/" + role.Id);
+    }
+    private async Task GetData()
+    {
+        roles = await _service.GetAll();
+        StateHasChanged();
+    }
+}

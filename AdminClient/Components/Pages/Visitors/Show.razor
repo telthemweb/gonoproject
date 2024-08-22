@@ -1,0 +1,53 @@
+﻿@page "/show/{id:int}"
+@inject IVisitorService _service;
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@attribute [StreamRendering]
+@attribute [Authorize]
+
+<PageTitle>@visitor.FullName - Profile</PageTitle>
+
+<MudPaper Class=" mt-2 mb-2" Outlined="true">
+    <MudBreadcrumbs Items="_items">
+        <SeparatorTemplate>
+            <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Size="Size.Small" />
+        </SeparatorTemplate>
+    </MudBreadcrumbs>
+</MudPaper>
+
+<MudCard Class="mt-3">
+    <MudCardHeader>
+        <CardHeaderContent><MudText Typo="Typo.h6">Visitor Profile</MudText> </CardHeaderContent>
+    </MudCardHeader>
+     <MudCardContent>
+
+        <MudTabs Outlined="true">
+            <MudTabPanel Text="Personal Details" Icon="@Icons.Material.Filled.AccountCircle">
+                <ProfileDetails visitor="visitor" />
+            </MudTabPanel>
+           
+        </MudTabs>
+     </MudCardContent>
+
+</MudCard>
+@code {
+    private MudTabs activetab = new MudTabs();
+    private List<BreadcrumbItem> _items = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem("Home", href: "/Home"),
+          new BreadcrumbItem("Visitor", href: "/visitors"),
+        new BreadcrumbItem("Visitor Profile", href: null, disabled: true)
+    };
+
+    [Parameter]
+    public int id { get; set; }
+    public Visitor? visitor { get; set; } = new();
+    protected override async Task OnInitializedAsync()
+    {
+        var response = await _service.GetOne(id);
+        visitor = response;
+        base.OnInitializedAsync();
+
+
+    }
+}

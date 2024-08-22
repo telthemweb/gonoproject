@@ -1,0 +1,116 @@
+﻿@using Application.Dto.Systempermissions
+@using Application.Dto.Systemsubmodules
+@inject IDialogService DialogService;
+@inject ISnackbar Snackbar
+@inject ISystempermissionService _service;
+@inject NavigationManager _navigation;
+<MudSimpleTable Dense="true" Bordered="true">
+    <thead>
+        <tr>
+            <th>Permissions   <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Color="Color.Info" aria-label="delete" OnClick="()=>OpenDialog()"></MudIconButton></th>
+         </tr>
+    </thead>
+    <tbody>
+        @if (systemsubmodule!= null)
+        {
+            @if (systemsubmodule.systempermissions != null)
+            {
+                        @if (systemsubmodule.systempermissions.Count() > 0)
+                        {
+                                @foreach (var item2 in systemsubmodule.systempermissions)
+                                {
+                                    <tr>
+                                        <td class="d-flex">                       
+                                            <MudText Class="pt-3">@item2.Name</MudText>
+                                            <div class="d-flex">
+                                                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" aria-label="delete" OnClick="()=>DeleteRecord(item2)"></MudIconButton>
+                                            </div>
+                                        </td>
+                 
+                                            </tr>
+                                 }
+
+                         }else
+                            {
+                                <tr>
+                                    <td><MudText Color="Color.Error" Align="Align.Center">No permissions found</MudText></td>
+                                </tr>
+                            }
+            }
+            else
+            {
+                <tr>
+                    <td><MudText Color="Color.Error" Align="Align.Center">No permissions found</MudText></td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td><MudText Color="Color.Error" Align="Align.Center">No permissions found</MudText></td>
+            </tr>
+        }
+    </tbody>
+</MudSimpleTable>
+
+@code {
+    [Parameter]
+    public Systemsubmodule systemsubmodule { get; set; } = new();
+
+    private ModifySystempermissionDto dto { get; set; } = new ();
+ 
+
+    protected override Task OnParametersSetAsync()
+    {
+        if(systemsubmodule != null)
+        {
+            dto.SystemsubmoduleId = systemsubmodule.Id;
+        }
+        return base.OnParametersSetAsync();
+    }
+
+    private async void DeleteRecord(Systempermission record)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Warning",
+            "Deleting can not be undone!",
+            yesText: "Delete!", cancelText: "Cancel");
+        if ((bool)result)
+        {
+            var response = await _service.Delete(record.Id);
+            if (response.Status == ResponseStatus.SUCCESS)
+            {
+                Snackbar.Add(response.Message, Severity.Success);
+                //_navigation.Refresh(true);
+            }
+            else
+            {
+                Snackbar.Add(response.Message, Severity.Error);
+            }
+        }
+
+    }
+
+    private async void OpenDialog()
+    {
+
+        var title = "New Permission";
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var parameters = new DialogParameters<ModifySystempermissionComponent>
+        {
+                {x=>x.dto,dto}
+        };
+        var dialog = await DialogService.ShowAsync<ModifySystempermissionComponent>(title, parameters, options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            bool.TryParse(result.Data.ToString(), out bool success);
+            if (success)
+            {
+                //_navigation.Refresh(true);
+            }
+        }
+    }
+
+}

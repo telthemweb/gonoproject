@@ -1,0 +1,187 @@
+﻿@page "/users"
+@using Application.Dto.Systemmodules
+@using Application.Dto.Users
+@inject IApplicationUserService _service
+@inject IDialogService DialogService;
+@inject ISnackbar Snackbar
+@inject NavigationManager _nav;
+@attribute [StreamRendering]
+@attribute [Authorize]
+<MudPaper Class=" mt-2 mb-2" Outlined="true">
+    <MudBreadcrumbs Items="_items">
+        <SeparatorTemplate>
+            <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Size="Size.Small" />
+        </SeparatorTemplate>
+    </MudBreadcrumbs>
+</MudPaper>
+@if (users == null)
+{
+    <MudSkeleton />
+    <MudSkeleton />
+    <MudSkeleton />
+    <MudSkeleton />
+    <MudSkeleton />
+    <MudSkeleton />
+}
+else
+{
+
+    <MudCard>
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h6">System Users</MudText>
+            </CardHeaderContent>
+            <CardHeaderActions>
+                <MudButton Variant="Variant.Filled" Size="Size.Small" Class="rounded-5" StartIcon="@Icons.Material.Outlined.Add" Color="Color.Primary" OnClick="()=>OpenDialog()">Add New</MudButton>
+            </CardHeaderActions>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudSimpleTable Outlined="true" Dense="true">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Surname</th>
+                        <th>Email</th>
+                        <th>Gender</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (users.Count() > 0)
+                    {
+                        @foreach (var item in users)
+                        {
+                            <tr>
+                                <td>
+                                    @item.Name                                  
+                                </td>
+                                <td>@item.Surname</td>
+                                <td>@item.Email</td>
+                                <td>@item.Gender</td>
+                                <td>@item.Status</td>
+                                <td>
+                                    <div class="d-flex">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Info" aria-label="edit" OnClick="()=>EditDialog(item)"></MudIconButton>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Refresh" Size="Size.Small" Color="Color.Warning" aria-label="delete" OnClick="()=> ResetPassword(item)"></MudIconButton>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Search" Size="Size.Small" Color="Color.Success" aria-label="edit" OnClick="()=>ShowUser(item.Id)"></MudIconButton>
+                                    </div>
+                                </td>
+
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td>
+                                <MudText Color="Color.Error" Align="Align.Center">No records found</MudText>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+        </MudCardContent>
+    </MudCard>
+}
+
+@code {
+    private List<BreadcrumbItem> _items = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem("Home", href: "/Home"),
+        new BreadcrumbItem("Application Users", href: null, disabled: true)
+    };
+
+    private List<ApplicationUser>? users { get; set; }
+    private ModifyUserDto dto { get; set; } = new();
+    protected override async Task OnInitializedAsync()
+    {
+        var response = await _service.GetAll();
+        users = response;
+
+        base.OnInitializedAsync();
+
+
+    }
+
+    private async void OpenDialog()
+    {
+        var title = "New User";
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var parameters = new DialogParameters<ModifyUserComponent>
+        {
+                {x=>x.dto,dto}
+        };
+        var dialog = await DialogService.ShowAsync<ModifyUserComponent>(title, parameters, options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            bool.TryParse(result.Data.ToString(), out bool success);
+            if (success)
+            {
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async void EditDialog(ApplicationUser user)
+    {
+
+        if (user != null)
+        {
+            dto.Id = user.Id;
+            dto.Name=user.Name ;
+            dto.Email=  user.Email;
+            dto.Surname= user.Surname;
+            dto.Title= user.Title;
+            dto.Gender= user.Gender;
+            dto.Status=  user.Status;
+
+        }
+        var title = " Update User";
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var parameters = new DialogParameters<ModifyUserComponent>
+        {
+                {x=>x.dto,dto}
+        };
+        var dialog = await DialogService.ShowAsync<ModifyUserComponent>(title, parameters, options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            bool.TryParse(result.Data.ToString(), out bool success);
+            if (success)
+            {
+                StateHasChanged();
+            }
+        }
+    }
+    private async void ShowUser(string userid)
+    {
+        _nav.NavigateTo($"/user/{userid}");
+    }
+    private async void ResetPassword(ApplicationUser record)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Warning",
+            "Are you sure you want to reset user password!",
+            yesText: "Yes Reset!", cancelText: "Cancel");
+        if ((bool)result)
+        {
+            var response = await _service.ResetPassword(record.Id);
+            if (response.Status == ResponseStatus.SUCCESS)
+            {
+                Snackbar.Add(response.Message, Severity.Success);
+                
+            }
+            else
+            {
+                Snackbar.Add(response.Message, Severity.Error);
+            }
+        }
+
+    }
+
+   
+}

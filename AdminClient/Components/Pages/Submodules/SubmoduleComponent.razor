@@ -1,0 +1,134 @@
+﻿@using Application.Dto.Systemsubmodules
+@inject IDialogService DialogService;
+@inject ISnackbar Snackbar
+@inject ISubmoduleService _service;
+@inject NavigationManager _navigation;
+<MudSimpleTable Dense="true" Bordered="true">
+    <thead>
+        <tr>
+            <th>Sub modules   <MudIconButton Icon="@Icons.Material.Filled.Add" Size="Size.Small" Color="Color.Info" aria-label="delete" OnClick="()=>OpenDialog()"></MudIconButton></th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (systemmodule.submodules.Count() > 0)
+        {
+            @foreach (var item2 in systemmodule.submodules)
+            {
+                <tr>
+                    <td class="d-flex">
+                        <MudIcon Icon="@item2.Icon" Title="Favorite" Size="Size.Small" Class="pt-3 mr-2" />
+                        <MudText Class="pt-3">@item2.Name</MudText>
+                        <div class="d-flex">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Info" aria-label="delete" OnClick="()=>EditDialog(item2)"></MudIconButton>
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" aria-label="delete" OnClick="()=>DeleteRecord(item2)"></MudIconButton>
+                        </div>
+                    </td>
+                    <td>
+                      <AdminClient.Components.Pages.Systempermission.SystempermissionComponent systemsubmodule="@item2"/>
+
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td><MudText Color="Color.Error" Align="Align.Center">No submodules found</MudText></td>
+            </tr>
+        }
+    </tbody>
+</MudSimpleTable>
+
+@code {
+    [Parameter]
+    public Systemmodule systemmodule { get; set; } = new();
+
+    private ModifySystemsubmoduleDto dto { get; set; } = new();
+
+    private async void DeleteRecord(Systemsubmodule record)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Warning",
+            "Deleting can not be undone!",
+            yesText: "Delete!", cancelText: "Cancel");
+        if ((bool)result)
+        {
+            var response = await _service.Delete(record.Id);
+            if (response.Status == ResponseStatus.SUCCESS)
+            {
+                Snackbar.Add(response.Message, Severity.Success);
+                //_navigation.Refresh(true);
+            }
+            else
+            {
+                Snackbar.Add(response.Message, Severity.Error);
+            }
+        }
+
+    }
+    protected override Task OnParametersSetAsync()
+    {
+        if(systemmodule != null)
+        {
+            dto.SystemmoduleId = systemmodule.Id;
+        }
+        return base.OnParametersSetAsync();
+    }
+
+
+    private async void OpenDialog()
+    {
+
+        var title = "New Submodule";
+        dto.SystemmoduleId = systemmodule.Id;
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var parameters = new DialogParameters<ModifySystemsubmoduleComponent>
+        {
+                {x=>x.dto,dto}
+        };
+        var dialog = await DialogService.ShowAsync<ModifySystemsubmoduleComponent>(title, parameters, options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            bool.TryParse(result.Data.ToString(), out bool success);
+            if (success)
+            {
+                //_navigation.Refresh(true);
+            }
+        }
+    }
+
+    private async void EditDialog(Systemsubmodule module)
+    {
+
+        if (module != null)
+        {
+            dto.Id = module?.Id;
+            dto.Icon = module?.Icon;
+            dto.Name = module?.Name;
+            dto.Url = module?.Url;
+            dto.SystemmoduleId = module.SystemmoduleId;
+            dto.AccessName = module?.AccessName;
+
+        }
+        var title = " Update Module";
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var parameters = new DialogParameters<ModifySystemsubmoduleComponent>
+        {
+                {x=>x.dto,dto}
+        };
+        var dialog = await DialogService.ShowAsync<ModifySystemsubmoduleComponent>(title, parameters, options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            bool.TryParse(result.Data.ToString(), out bool success);
+            if (success)
+            {
+                //_navigation.Refresh(true);
+            }
+        }
+    }
+}

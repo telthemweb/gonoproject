@@ -1,0 +1,93 @@
+﻿@if (visitor == null)
+{
+    <MudSkeleton Width="100%" Height="30px" />
+    <MudSkeleton Width="100%" Height="30px" />
+    <MudSkeleton Width="100%" Height="30px" />
+}
+else
+{
+    <MudPaper Class="pa-4" Elevation="0">
+        <MudGrid>
+            <MudItem md="4">
+                <MudPaper Class="mb-2" Elevation="0">
+                    <MudGrid>
+                        <MudItem md="12">
+                            <MudImage Src="profile/placeholder.png" Alt="Logo" Elevation="0" Width="350" Height="250" />
+                        </MudItem>
+                        <MudItem md="6">
+                            <MudButton Variant="Variant.Filled" Size="Size.Medium" Color="Color.Primary">
+                                CODE: @visitor.VisitorNumber
+                            </MudButton>
+                        </MudItem>
+                       
+                    </MudGrid>
+                </MudPaper>
+            </MudItem>
+            <MudItem md="8">
+                <MudSimpleTable Outlined="true" Dense="true" Bordered="false">
+                    <tbody>
+                        <tr>
+                            <MudTd>Title</MudTd>
+                            <MudTd>@visitor.Title?.Name</MudTd>
+                        </tr>
+                        <tr>
+                            <MudTd>Name</MudTd>
+                            <MudTd>@visitor.FullName</MudTd>
+                        </tr>
+                        <tr>
+                            <MudTd>Age</MudTd>
+                            <MudTd>@visitor.Age</MudTd>
+                        </tr>
+                        <tr>
+                            <MudTd>ID Number</MudTd>
+                            <MudTd>@visitor.IDnumber</MudTd>
+                        </tr>
+                        <tr>
+                            <MudTd>Date of Birth</MudTd>
+                            <MudTd>@visitor.Dob</MudTd>
+                        </tr>
+                        <tr>
+                            <MudTd>Province</MudTd>
+                            <MudTd>@visitor.Province?.Name</MudTd>
+                        </tr>
+                        <tr>
+                            <MudTd>City/Town</MudTd>
+                            <MudTd>@visitor.City?.Name</MudTd>
+                        </tr>
+                        <tr>
+                            <MudTd>Gender</MudTd>
+                            <MudTd>@visitor.Gender?.Name</MudTd>
+                        </tr>
+                        <tr>
+                            <MudTd>Marital Status</MudTd>
+                            <MudTd>@visitor.MaritalStatus?.Name</MudTd>
+                        </tr>
+                      
+
+
+                     
+
+
+
+
+                    </tbody>
+                </MudSimpleTable>
+            </MudItem>
+        </MudGrid>
+
+    </MudPaper>
+
+
+
+}
+
+@code {
+    [Parameter]
+    public Visitor visitor { get; set; } = new();
+
+    private bool dense = false;
+    private bool hover = true;
+    private bool striped = false;
+    private bool bordered = false;
+}
+

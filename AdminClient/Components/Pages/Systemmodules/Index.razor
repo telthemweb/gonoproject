@@ -1,0 +1,169 @@
+﻿@page "/systemmodules"
+@using Application.Dto.Systemmodules
+@inject ISystemmoduleService _service
+@inject IDialogService DialogService;
+@inject ISnackbar Snackbar
+@attribute [StreamRendering]
+@attribute [Authorize]
+<MudPaper Class=" mt-2 mb-2" Outlined="true">
+    <MudBreadcrumbs Items="_items">
+        <SeparatorTemplate>
+            <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Size="Size.Small" />
+        </SeparatorTemplate>
+    </MudBreadcrumbs>
+</MudPaper>
+@if (systemmodules == null)
+{
+    <MudSkeleton />
+    <MudSkeleton />
+    <MudSkeleton />
+    <MudSkeleton />
+    <MudSkeleton />
+    <MudSkeleton />
+}
+else
+{
+    
+    <MudCard>
+        <MudCardHeader>
+            <CardHeaderContent>
+                <MudText Typo="Typo.h6">System modules</MudText>
+            </CardHeaderContent>
+            <CardHeaderActions>
+                <MudButton Variant="Variant.Filled" Size="Size.Small" Class="rounded-5" StartIcon="@Icons.Material.Outlined.Add" Color="Color.Primary" OnClick="()=>OpenDialog()">Add New</MudButton>
+            </CardHeaderActions>
+        </MudCardHeader>
+        <MudCardContent>
+            <MudSimpleTable Outlined="true" Dense="true">
+               <tbody>
+                    @if (systemmodules.Count() > 0)
+                    {
+                       @foreach (var item in systemmodules)
+                        {
+                         <tr>
+                             <td class="d-flex">
+                                    <MudIcon Icon="@item.Icon" Title="Favorite" Size="Size.Small" Class="pt-3 mr-2" />
+                                 <MudText Class="pt-3">@item.Name</MudText>
+                                 <div class="d-flex">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Info" aria-label="edit" OnClick="()=>EditDialog(item)"></MudIconButton>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" aria-label="delete" OnClick="()=>DeleteRecord(item)"></MudIconButton>
+                                 </div>
+                             </td>
+                             <td>
+                                    <AdminClient.Components.Pages.Submodules.SubmoduleComponent systemmodule="@item" />
+                             </td>
+                       
+                         </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td>
+                                <MudText Color="Color.Error" Align="Align.Center">No records found</MudText>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+        </MudCardContent>
+    </MudCard>
+}
+
+@code {
+    private List<BreadcrumbItem> _items = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem("Home", href: "/Home"),
+        new BreadcrumbItem("System modules", href: null, disabled: true)
+    };
+
+    private List<Systemmodule>? systemmodules { get; set; }
+    private ModifySystemmoduleDto dto { get; set; } = new();
+    protected override async Task OnInitializedAsync()
+    {
+        var response = await _service.GetAll();
+        systemmodules = response;
+
+        base.OnInitializedAsync();
+
+
+    }
+
+    private async void OpenDialog()
+    {
+        var title = "New Module";
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var parameters = new DialogParameters<ModifySystemmoduleComponent>
+        {
+                {x=>x.dto,dto}
+        };
+        var dialog = await DialogService.ShowAsync<ModifySystemmoduleComponent>(title, parameters, options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            bool.TryParse(result.Data.ToString(), out bool success);
+            if (success)
+            {
+                await GetData();
+            }
+        }
+    }
+
+    private async void EditDialog(Systemmodule module)
+    {
+
+        if (module != null)
+        {
+            dto.Id = module?.Id;
+            dto.Icon = module?.Icon;
+            dto.Name = module?.Name;
+            dto.AccessName = module?.AccessName;
+
+        }
+        var title = " Update Module";
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var parameters = new DialogParameters<ModifySystemmoduleComponent>
+        {
+                {x=>x.dto,dto}
+        };
+        var dialog = await DialogService.ShowAsync<ModifySystemmoduleComponent>(title, parameters, options);
+        var result = await dialog.Result;
+        if (!result.Cancelled)
+        {
+            bool.TryParse(result.Data.ToString(), out bool success);
+            if (success)
+            {
+                await GetData();
+            }
+        }
+    }
+    private async void DeleteRecord(Systemmodule record)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Warning",
+            "Deleting can not be undone!",
+            yesText: "Delete!", cancelText: "Cancel");
+        if ((bool)result)
+        {
+            var response = await _service.Delete(record.Id);
+            if (response.Status == ResponseStatus.SUCCESS)
+            {
+                Snackbar.Add(response.Message, Severity.Success);
+                await GetData();
+            }
+            else
+            {
+                Snackbar.Add(response.Message, Severity.Error);
+            }
+        }
+       
+    }
+
+    private async Task GetData()
+    {
+        systemmodules = await _service.GetAll();
+        StateHasChanged();
+    }
+}

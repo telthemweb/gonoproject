@@ -1,0 +1,203 @@
+﻿@page "/systemrole/{id}"
+@using Application.Dto.RoleSystempermissions
+@inject IRoleService _service
+@inject ISystemmoduleService _moduleservice
+@inject IRoleSystemPermissionService _rolepermissionserive;
+@inject IDialogService DialogService;
+@inject ISnackbar Snackbar
+@attribute [StreamRendering]
+@attribute [Authorize]
+<MudPaper Class=" mt-2 mb-2" Outlined="true">
+    <MudBreadcrumbs Items="_items">
+        <SeparatorTemplate>
+            <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Size="Size.Small" />
+        </SeparatorTemplate>
+    </MudBreadcrumbs>
+</MudPaper>
+@if (systemmodules == null)
+{
+    <MudSkeleton />
+    <MudSkeleton />
+    <MudSkeleton />
+    <MudSkeleton />
+    <MudSkeleton />
+    <MudSkeleton />
+}
+else
+{
+<MudCard>
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText>System modules</MudText>
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudSimpleTable Dense="true">
+            <thead>
+                <tr>
+                    <th>Modules</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                        @if (systemmodules.Count() > 0)
+                        {
+                            @foreach (var item in systemmodules)
+                            {
+                            <tr>
+                                <td class="d-flex">
+                                    <MudIcon Icon="@item.Icon" Title="Favorite" Size="Size.Small" Class="pt-3 mr-2" />
+                                    <MudText Class="pt-3">@item.Name</MudText>
+                                  
+                                </td>
+                                <td>
+                                    <MudSimpleTable Dense="true" Bordered="true">
+                                        <thead>
+                                            <tr>
+                                                <th>Sub modules </th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @if (item.submodules.Count() > 0)
+                                            {
+                                                @foreach (var item2 in item.submodules)
+                                                {
+                                                    <tr>
+                                                        <td class="d-flex">
+                                                            <MudIcon Icon="@item2.Icon" Title="Favorite" Size="Size.Small" Class="pt-3 mr-2" />
+                                                            <MudText Class="pt-3">@item2.Name</MudText>
+                                                          
+                                                        </td>
+                                                        <td>
+                                                            <MudSimpleTable Dense="true" Bordered="true">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>Permissions </th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                   
+                                                                      
+                                                                            @if (item2.systempermissions.Count() > 0)
+                                                                            {
+                                                                                @foreach (var item3 in item2.systempermissions)
+                                                                                {
+                                                                                    <tr>
+                                                                                <td class="d-flex justify-space-between ">
+                                                                                            <MudText Class="pt-3">@item3.Name</MudText>
+                                                                                    @if (item3.rolesystempermissions.Count() > 0)
+                                                                                    {
+                                                                                        <MudChip Size="Size.Small" Color="Color.Success">Assigned</MudChip>
+                                                                                        <MudIconButton Icon="@Icons.Material.Filled.Remove" Color="Color.Error" aria-label="delete" OnClick="()=>UnAssign(item3.rolesystempermissions.First().Id)"></MudIconButton>
+                                                                                    }
+                                                                                    else
+                                                                                    {
+                                                                                        <MudChip Text="red" Size="Size.Small" Color="Color.Error">Not assigned</MudChip>
+                                                                                        <MudIconButton Icon="@Icons.Material.Filled.Check" Color="Color.Success" aria-label="delete" OnClick="()=>Assign(item3.Id)"></MudIconButton>
+
+                                                                                    }
+                                                                                </td>
+
+                                                                                    </tr>
+                                                                                }
+
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <tr>
+                                                                                    <td><MudText Color="Color.Error" Align="Align.Center">No permissions found</MudText></td>
+                                                                                </tr>
+                                                                            }
+                                                                   
+                                                                  
+                                                                </tbody>
+                                                            </MudSimpleTable>
+
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <tr>
+                                                    <td><MudText Color="Color.Error" Align="Align.Center">No submodules found</MudText></td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </MudSimpleTable>
+
+                                </td>
+
+                            </tr>
+                            }
+                        }
+                        else
+                        {
+                        <tr>
+                            <td>
+                                <MudText Color="Color.Error" Align="Align.Center">No records found</MudText>
+                            </td>
+                        </tr>
+                        }
+            </tbody>
+        </MudSimpleTable>
+    </MudCardContent>
+</MudCard>
+}
+
+@code {
+    private List<BreadcrumbItem> _items = new List<BreadcrumbItem>
+    {
+        new BreadcrumbItem("Home", href: "/Home"),
+          new BreadcrumbItem("System roles", href: "/systemroles"),
+        new BreadcrumbItem("System role", href: null, disabled: true)
+    };
+    [Parameter]
+    public string id { get; set; }
+    private List<Systemmodule>? systemmodules { get; set; }
+    private Role role { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        systemmodules = await _moduleservice.GetByRoleId(id);
+
+        base.OnInitializedAsync();
+    }
+
+    private async Task Assign(int permissionId)
+    {
+        ModifyRoleSystempermissionDto dto = new ModifyRoleSystempermissionDto();
+        dto.SystempermissionId = permissionId;
+        dto.RoleId = id;
+        var response = await _rolepermissionserive.Modify(dto);
+        if (response != null && response.Status == ResponseStatus.SUCCESS)
+        {
+
+            Snackbar.Add(response.Message, Severity.Success);
+            StateHasChanged();
+        }
+        else
+        {
+            Snackbar.Add(response.Message, Severity.Error);
+
+
+        }
+    }
+    private async Task UnAssign(int id)
+    {
+        var response = await _rolepermissionserive.Delete(id);
+        if (response != null && response.Status == ResponseStatus.SUCCESS)
+        {
+
+            Snackbar.Add(response.Message, Severity.Success);
+            StateHasChanged();
+        }
+        else
+        {
+            Snackbar.Add(response.Message, Severity.Error);
+
+
+        }
+    }
+}

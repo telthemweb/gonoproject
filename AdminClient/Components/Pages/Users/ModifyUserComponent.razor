@@ -1,0 +1,115 @@
+﻿@using Application.Dto.Users
+@inject ISnackbar Snackbar
+@inject IApplicationUserService _service;
+<EditForm Model="@model" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator />
+    <MudDialog>
+        <DialogContent>
+            <MudGrid>
+                <MudItem md="6" sm="12" xs="12">
+                    <MudTextField Label="Name"
+                                  @bind-Value="model.Name" Variant="Variant.Outlined" For="@(() => model.Name)" />
+
+                </MudItem>
+                <MudItem md="6" sm="12" xs="12">
+                    <MudTextField Label="Surname"
+                                  @bind-Value="model.Surname" Variant="Variant.Outlined" For="@(() => model.Surname)" />
+
+                </MudItem>
+            </MudGrid>
+            <MudGrid>
+                <MudItem md="6" sm="12" xs="12">
+                    <MudTextField Label="Email"
+                                  @bind-Value="model.Email" Variant="Variant.Outlined" For="@(() => model.Email)" />
+                </MudItem>
+                <MudItem md="6" sm="12" xs="12">
+                    <MudTextField Label="Phone number"
+                                  @bind-Value="model.Phonenumber" Variant="Variant.Outlined" For="@(() => model.Phonenumber)" />
+                </MudItem>
+            </MudGrid>
+            <MudGrid>
+                <MudItem md="4" sm="12" xs="12">
+                    <MudSelect T="string" Label="Gender" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" @bind-Value="model.Gender" For="@(() => model.Gender)">
+                        <MudSelectItem Value="@("F")" />
+                        <MudSelectItem Value="@("M")" />
+                    </MudSelect>
+                </MudItem>
+                <MudItem md="4" sm="12" xs="12">
+                    <MudSelect T="string" Label="Status" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" @bind-Value="model.Status" For="@(() => model.Status)">
+                        <MudSelectItem Value="@("ACTIVE")" />
+                        <MudSelectItem Value="@("BLOCKED")" />
+                    </MudSelect>
+                </MudItem>
+                <MudItem md="4" sm="12" xs="12">
+                    <MudSelect T="string" Label="Title" Variant="Variant.Outlined" AnchorOrigin="Origin.BottomCenter" @bind-Value="model.Title" For="@(() => model.Title)">
+                        <MudSelectItem Value="@("Mr")" />
+                        <MudSelectItem Value="@("Mrs")" />
+                        <MudSelectItem Value="@("Miss")" />
+                        <MudSelectItem Value="@("Ms")" />
+                        <MudSelectItem Value="@("Dr")" />
+                        <MudSelectItem Value="@("Prof")" />
+                    </MudSelect>
+                </MudItem>
+              
+            </MudGrid>
+
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancel">Cancel</MudButton>
+            <MudButton Color="Color.Primary" ButtonType="ButtonType.Submit">
+                @if (_processing)
+                {
+                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                    <MudText Class="ms-2">Processing...</MudText>
+                }
+                else
+                {
+                    <MudText>Submit</MudText>
+                }
+            </MudButton>
+        </DialogActions>
+      </MudDialog>
+  </EditForm>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    [Parameter]
+    public ModifyUserDto dto { get; set; }
+    [Parameter]
+    public string token { get; set; } = string.Empty;
+    private bool _processing = false;
+    private ModifyUserDto model { get; set; } = new();
+    protected override Task OnParametersSetAsync()
+    {
+        model = dto;
+        return base.OnParametersSetAsync();
+    }
+    private async Task OnValidSubmit()
+    {
+        _processing = true;
+        try
+        {
+            var response = await _service.ModifyUser(dto);
+            _processing = false;
+            if (response != null && response.Status == ResponseStatus.SUCCESS)
+            {
+
+                Snackbar.Add(response.Message, Severity.Success);
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                Snackbar.Add(response.Message, Severity.Error);
+                MudDialog.Close(DialogResult.Ok(false));
+            }
+        }
+        catch (Exception ex)
+        {
+
+            Snackbar.Add(ex.Message, Severity.Error);
+            MudDialog.Close(DialogResult.Ok(false));
+        }
+    }
+    void Submit() => MudDialog.Close(DialogResult.Ok(true));
+    void Cancel() => MudDialog.Cancel();
+}

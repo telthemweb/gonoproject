@@ -1,0 +1,82 @@
+﻿@using Application.Dto.Roles
+@using Application.Dto.Systemmodules
+@inject ISnackbar Snackbar
+@inject IRoleService _service;
+<EditForm Model="@formdto" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator />
+    <MudDialog>
+
+        <DialogContent>
+            <MudGrid>
+                <MudItem md="12" sm="12" xs="12">
+                    <MudTextField Label="Name"
+                                  @bind-Value="formdto.Name" Variant="Variant.Outlined" For="@(() => formdto.Name)" />
+                </MudItem>
+            </MudGrid>
+          
+           
+        
+          
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="Cancel">Cancel</MudButton>
+            <MudButton Color="Color.Primary" ButtonType="ButtonType.Submit">
+                @if (_processing)
+                {
+                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+                    <MudText Class="ms-2">Processing...</MudText>
+                }
+                else
+                {
+                    <MudText>Submit</MudText>
+                }
+            </MudButton>
+        </DialogActions>
+    </MudDialog>
+
+</EditForm>
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public ModifyRoleDto dto { get; set; }
+
+    [Parameter]
+    public string token { get; set; } = string.Empty;
+    private bool _processing = false;
+    private ModifyRoleDto formdto { get; set; } = new();
+    protected override Task OnParametersSetAsync()
+    {
+        formdto = dto;
+        return base.OnParametersSetAsync();
+    }
+    private async Task OnValidSubmit()
+    {
+        _processing = true;
+        try
+        {
+            var response = await _service.Modify(dto);
+            _processing = false;
+            if (response != null && response.Status==ResponseStatus.SUCCESS)
+            {
+
+                Snackbar.Add(response.Message, Severity.Success);
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                Snackbar.Add(response.Message, Severity.Error);
+                MudDialog.Close(DialogResult.Ok(false));
+            }
+        }
+        catch (Exception ex)
+        {
+
+            Snackbar.Add(ex.Message, Severity.Error);
+            MudDialog.Close(DialogResult.Ok(false));
+        }
+
+    }
+    void Submit() => MudDialog.Close(DialogResult.Ok(true));
+    void Cancel() => MudDialog.Cancel();
+}

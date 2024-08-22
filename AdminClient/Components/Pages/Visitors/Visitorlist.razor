@@ -1,0 +1,196 @@
+﻿@page "/visitors"
+@using Application.Dto
+@inject IVisitorService _service;
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@attribute [StreamRendering]
+@attribute [Authorize]
+@inject NavigationManager _nav;
+
+<MudPaper Class="mt-2 mb-2" Outlined="true">
+    <MudBreadcrumbs Items="_items">
+        <SeparatorTemplate>
+            <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Size="Size.Small" />
+        </SeparatorTemplate>
+    </MudBreadcrumbs>
+</MudPaper>
+
+@if (visitors == null)
+{
+    <MudSkeleton Width="100%" Height="30px" />
+    <MudSkeleton Width="100%" Height="30px" />
+    <MudSkeleton Width="100%" Height="30px" />
+}
+else
+{
+    <MudTable Outlined="true" Items="@filteredPaymentItems" Dense="@dense" Hover="@hover" Bordered="@bordered" Striped="@striped">
+        <ToolBarContent>
+            <MudTextField @bind-Value="searchString" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            <MudSpacer />
+            <MudButton Variant="Variant.Filled" Size="Size.Small" Class="rounded-5" StartIcon="@Icons.Material.Outlined.Add" Color="Color.Primary" OnClick="OpenDialog">Add New</MudButton>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh>Name</MudTh>
+            <MudTh>Gender</MudTh>
+            <MudTh>DOB</MudTh>
+            <MudTh>Age</MudTh>
+            <MudTh>City</MudTh>
+            <MudTh>Marital</MudTh>
+            <MudTh>National ID</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Name">@context.FullName</MudTd>
+            <MudTd DataLabel="Gender">@context.Gender?.Name</MudTd>
+            <MudTd DataLabel="DOB">@context.Dob</MudTd>
+            <MudTd DataLabel="AGE">@context.Age</MudTd>
+            <MudTd DataLabel="City">@context.City?.Name</MudTd>
+            <MudTd DataLabel="mstatus">@context.MaritalStatus?.Name</MudTd>
+            <MudTd DataLabel="Nationalid">@context.IDnumber</MudTd>
+            <MudTd>
+
+                <MudMenu Label="Action" Variant="Variant.Filled" Color="Color.Success" DisableElevation="true" Size="Size.Small"
+                         Dense="true"
+                         EndIcon="@Icons.Material.Filled.KeyboardArrowDown" IconColor="Color.Success">
+
+                    <MudMenuItem Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Info" aria-label="edit" OnClick="() => EditDialog(context)">Update</MudMenuItem>
+                    <MudDivider></MudDivider>
+                    <MudMenuItem Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" aria-label="delete" OnClick="() => DeleteRecord(context)">Delete</MudMenuItem>
+                    <MudDivider></MudDivider>
+                    <MudMenuItem Icon="@Icons.Material.Filled.VerifiedUser" Size="Size.Small" Color="Color.Error" aria-label="delete" OnClick="() => ShowVisitor(context)"> View Profile</MudMenuItem>
+                   </MudMenu>
+            </MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
+}
+
+@code {
+    private List<BreadcrumbItem> _items = new()
+    {
+        new BreadcrumbItem("Home", href: "/Home"),
+        new BreadcrumbItem("Visitors", href: null, disabled: true)
+    };
+
+    private bool dense = false;
+    private bool hover = true;
+    private bool striped = false;
+    private bool bordered = false;
+
+    private List<Visitor>? visitors;
+    private VisitorModifyDto dto = new();
+    private string searchString = "";
+    private Visitor? selectedItem;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetData();
+    }
+
+    private IEnumerable<Visitor> filteredPaymentItems => visitors?.Where(item => FilterFunc(item, searchString)) ?? Enumerable.Empty<Visitor>();
+
+    private bool FilterFunc(Visitor element, string searchString)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+        if (element.FullName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.IDnumber.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.MaritalStatus.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.City.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        return false;
+    }
+
+    private async Task OpenDialog()
+    {
+        var title = "New Visitor";
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true };
+        var parameters = new DialogParameters
+        {
+            { nameof(Add.dto), new VisitorModifyDto() }
+        };
+
+        var dialog = await DialogService.ShowAsync<Add>(title, parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Cancelled)
+        {
+            if (bool.TryParse(result.Data.ToString(), out bool success) && success)
+            {
+                await GetData();
+            }
+        }
+    }
+
+    private async Task EditDialog(Visitor statuse)
+    {
+        var title = "Update Visitor";
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Large, FullWidth = true, CloseButton = true };
+        var parameters = new DialogParameters
+        {
+            { nameof(Add.dto), new VisitorModifyDto {
+                Id = statuse.Id,
+                 FirstName = statuse.FirstName,
+                LastName = statuse.LastName,
+                 PreviousName = statuse.PreviousName,
+                GenderId = (int)statuse.GenderId,
+                IDnumber = statuse.IDnumber,
+                Dob = statuse.Dob,
+                CityId=(int)statuse.CityId,
+                 TitleId=(int)statuse.TitleId,
+                ProvinceId=(int)statuse.ProvinceId,
+                 NationalityId=(int)statuse.NationalityId,
+                MaritalStatusId=(int)statuse.MaritalStatusId,
+            } }
+        };
+
+        var dialog = await DialogService.ShowAsync<Add>(title, parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Cancelled)
+        {
+            if (bool.TryParse(result.Data.ToString(), out bool success) && success)
+            {
+                await GetData();
+            }
+        }
+    }
+
+    private async void ShowVisitor(Visitor record)
+    {
+        _nav.NavigateTo($"/show/{record.Id}");
+    }
+
+    private async Task DeleteRecord(Visitor statuse)
+    {
+        var result = await DialogService.ShowMessageBox(
+            "Warning",
+            "Deleting cannot be undo!",
+            yesText: "Delete!", cancelText: "Cancel");
+
+        if (result == true)
+        {
+            var response = await _service.Delete(statuse.Id);
+            if (response.Status == ResponseStatus.SUCCESS)
+            {
+                Snackbar.Add(response.Message, Severity.Success);
+                await GetData();
+            }
+            else
+            {
+                Snackbar.Add(response.Message, Severity.Error);
+            }
+        }
+    }
+  
+    private async Task GetData()
+    {
+        var response = await _service.GetAll();
+        visitors = response;
+        StateHasChanged();
+    }
+}
