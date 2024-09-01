@@ -103,7 +103,7 @@
         };
         var dialog = await DialogService.ShowAsync<ModifySystempermissionComponent>(title, parameters, options);
         var result = await dialog.Result;
-        if (!result.Cancelled)
+        if (!result.Canceled)
         {
             bool.TryParse(result.Data.ToString(), out bool success);
             if (success)

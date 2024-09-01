@@ -1,19 +1,24 @@
 ﻿@inherits LayoutComponentBase
 
-<PageTitle>Hybrid Visitor Portal</PageTitle>
+<PageTitle>HVSM Portal</PageTitle>
 
 <MudThemeProvider />
 
 <MudLayout>
-    <MudAppBar Elevation="1" Color="Color.Transparent">
-        <MudText Typo="Typo.h5" Class="ml-3">HVSM</MudText>
+    <MudContainer>
+    <MudAppBar Elevation="1" Color="Color.Transparent" Class="p-2">
+        <MudText Typo="Typo.h5" Class="ml-3">
+            HVSM Portal
+        </MudText>
         <MudSpacer />
-        <MudButton Href="/Login"
-           Variant="Variant.Text"
-           StartIcon="@Icons.Material.Outlined.Login"
-           Color="Color.Secondary"
-           Style="text-transform:none">Login</MudButton>
+       
+            <MudButton Href="/Login"
+                       Variant="Variant.Text"
+                       StartIcon="@Icons.Material.Outlined.Login"
+                       Color="Color.Dark"
+                       Style="text-transform:none">Login</MudButton>
     </MudAppBar>
+    </MudContainer>
     <MudMainContent>
         @Body
     </MudMainContent>

@@ -21,5 +21,8 @@
     <PackageReference Include="Hangfire.MySqlStorage" Version="2.0.3" />
     <PackageReference Include="Serilog.AspNetCore" Version="8.0.1" />
 	</ItemGroup>
+	<ItemGroup>
+	  <Folder Include="Logs\" />
+	</ItemGroup>
 
 </Project>

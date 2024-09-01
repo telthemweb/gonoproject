@@ -1,0 +1,72 @@
+﻿@if (visitor == null)
+{
+    <MudSkeleton Width="100%" Height="30px" />
+    <MudSkeleton Width="100%" Height="30px" />
+    <MudSkeleton Width="100%" Height="30px" />
+}
+else
+{
+    <MudTable Outlined="true" Items="@filteredlogs" Dense="@dense" Hover="@hover" Bordered="@bordered" Striped="@striped">
+        <ToolBarContent>
+            <MudText>SYSTEM CLOCKINGS</MudText>
+            <MudSpacer />
+            <MudTextField @bind-Value="searchLogString" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh>City</MudTh>
+            <MudTh>Purpose</MudTh>
+            <MudTh>Date Checkin</MudTh>
+            <MudTh>Time Checkin</MudTh>
+            <MudTh>Status</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Name">@context.visitor?.City?.Name</MudTd>
+            <MudTd DataLabel="Name">@context.Purposeofvisit</MudTd>
+            <MudTd DataLabel="Name">@context.DateCheckin</MudTd>
+            <MudTd DataLabel="Name">@context.TimeCheckin</MudTd>
+            <MudTd DataLabel="Name">
+                @if (context.Status == "CHECKOUT")
+                {
+                    <MudChip Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" T="object">
+                        <MudText>CHECKOUT</MudText>
+                    </MudChip>
+                }
+                else
+                {
+                    <MudChip Icon="@Icons.Material.Filled.Close" Color="Color.Error" T="object">
+                        <MudText>CHECKIN</MudText>
+                    </MudChip>
+                }
+            </MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
+}
+
+@code {
+    [Parameter]
+    public Visitor visitor { get; set; } = new();
+
+    private List<Systemlog>? systemlogs;
+    private string searchLogString = "";
+
+    private IEnumerable<Systemlog> filteredlogs => visitor.visitorlog.Where(item => FilterFunc(item, searchLogString)) ?? Enumerable.Empty<Systemlog>();
+
+    private bool FilterFunc(Systemlog element, string searchString)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+        if (element.visitor.City.Name.ToString().Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    }
+
+    private bool dense = false;
+    private bool hover = true;
+    private bool striped = false;
+    private bool bordered = false;
+}
+

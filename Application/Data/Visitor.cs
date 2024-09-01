@@ -30,5 +30,8 @@ namespace Application.Data
         public Province? Province { get; set; }
         public Gender? Gender { get; set; }
         public Title? Title { get; set; }
+
+        public List<VisitorLogger> checkins { get; set; }
+        public List<Systemlog> visitorlog { get; set; }
     }
 }

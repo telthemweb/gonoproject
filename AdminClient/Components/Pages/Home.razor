@@ -1,7 +1,125 @@
 ﻿@page "/Home"
+@inject IDashboardService _service;
+@inject NavigationManager _nav;
 @attribute [Authorize]
-<PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<PageTitle>Administrator Dashboard</PageTitle>
 
-Welcome to your new app.
+<MudContainer Class="mt-5px-5" MaxWidth="MaxWidth.False">
+    <MudGrid>
+        <MudItem xs="12" sm="6" md="6">
+            <MudPaper Elevation="2" Class="pa-4" Style="height: 100px;">
+                <div class="flex-grow-1">
+                    <MudText Typo="Typo.h6">VISITORS</MudText>
+                    <div class="d-flex align-center my-1">
+                        <MudAvatar Class="me-2 pa-4" Style="background-color: var(--mud-palette-primary-hover);" Size="Size.Small">
+                            <MudIcon Color="Color.Primary" Icon="@Icons.Material.Filled.TrendingDown" Size="Size.Small" />
+                        </MudAvatar>
+                        <MudSpacer />
+                        <MudText Typo="Typo.h4">@totalVisitors</MudText>
+                    </div>
+                </div>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6" md="6">
+            <MudPaper Elevation="2" Class="pa-4" Style="height: 100px;">
+                <div class="flex-grow-1">
+                    <MudText Typo="Typo.h6">CHECK-INS</MudText>
+                    <div class="d-flex align-center my-1">
+                        <MudAvatar Class="me-2 pa-4" Style="background-color: var(--mud-palette-primary-hover);" Size="Size.Small">
+                            <MudIcon Color="Color.Primary" Icon="@Icons.Material.Filled.AccountCircle" Size="Size.Small" />
+                        </MudAvatar>
+                        <MudSpacer />
+                        <MudText Typo="Typo.h4">@totalVisitorlogs</MudText>
+                    </div>
+                </div>
+            </MudPaper>
+        </MudItem>
+    
+        
+
+    </MudGrid>
+    <MudGrid Class="mt-5 mb-lg-5">
+        <MudItem xs="12" sm="12" md="12">
+            @if (visitorlogs == null)
+            {
+                <MudSkeleton Width="100%" Height="30px" />
+                <MudSkeleton Width="100%" Height="30px" />
+                <MudSkeleton Width="100%" Height="30px" />
+            }
+            else
+            {
+                <MudTable Outlined="true" Items="@filteredvisitorlogs" Dense="@dense" Hover="@hover" Bordered="@bordered" Striped="@striped">
+                    <ToolBarContent>
+                        <MudText>RECENT CHECKED IN VISITORS</MudText>
+                        <MudSpacer />
+                        <MudTextField @bind-Value="searchsiteString" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                    </ToolBarContent>
+                    <HeaderContent>
+                        <MudTh>Name</MudTh>
+                        <MudTh>Gender</MudTh>
+                        <MudTh>City</MudTh>
+                        <MudTh>Purpose</MudTh>
+                        <MudTh>Date Checkin</MudTh>
+                        <MudTh>Time Checkin</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Name">@context.visitor?.FullName</MudTd>
+                        <MudTd DataLabel="Name">@context.visitor?.Gender?.Name</MudTd>
+                        <MudTd DataLabel="Name">@context.visitor?.City?.Name</MudTd>
+                        <MudTd DataLabel="Name">@context.Purposeofvisit</MudTd>
+                        <MudTd DataLabel="Name">@context.DateCheckin</MudTd>
+                        <MudTd DataLabel="Name">@context.TimeCheckin</MudTd>
+                    </RowTemplate>
+                    <PagerContent>
+                        <MudTablePager />
+                    </PagerContent>
+                </MudTable>
+            }
+        </MudItem>
+       
+    </MudGrid>
+</MudContainer>
+@code {
+
+    private int totalVisitors { set; get; }
+    private int totalVisitorlogs { set; get; }
+
+    private bool dense = false;
+    private bool hover = true;
+    private bool striped = false;
+    private bool bordered = false;
+
+    private string searchassetString = "";
+    private string searchsiteString = "";
+
+    private List<VisitorLogger>? visitorlogs { get; set; }
+
+
+    private IEnumerable<VisitorLogger> filteredvisitorlogs => visitorlogs?.Where(item => FilterFunc(item, searchassetString)) ?? Enumerable.Empty<VisitorLogger>();
+
+    private bool FilterFunc(VisitorLogger element, string searchString)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+        if (element.visitor.FullName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.visitor.City.Name.ToString().Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.visitor.Gender.Name.ToString().Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+      
+        return false;
+    }
+
+  
+
+    protected override async Task OnInitializedAsync()
+    {
+        totalVisitorlogs = await _service.GetDashboardVisitorTotallogs();
+        totalVisitors = await _service.GetDashboardVisitorsTotal();
+        visitorlogs = await _service.GetDashboardVisitorLogger();
+    }
+}
+
+

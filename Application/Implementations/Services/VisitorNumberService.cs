@@ -3,7 +3,6 @@ using Application.Contracts.Persistence;
 using Application.Contracts.Services;
 using Application.Data;
 using Application.Dto;
-using Application.Logs;
 using Application.Models;
 using AutoMapper;
 

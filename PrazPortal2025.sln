@@ -13,6 +13,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Application", "Application\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AdminClient", "AdminClient\AdminClient.csproj", "{F1CE58B6-CB79-4B30-A3C9-3A04F6B41B0E}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Keryleenui", "..\Keryleenui\Keryleenui\Keryleenui.csproj", "{65A01FA7-3D49-436E-B791-9B4CC14C87C4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{F1CE58B6-CB79-4B30-A3C9-3A04F6B41B0E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F1CE58B6-CB79-4B30-A3C9-3A04F6B41B0E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F1CE58B6-CB79-4B30-A3C9-3A04F6B41B0E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{65A01FA7-3D49-436E-B791-9B4CC14C87C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65A01FA7-3D49-436E-B791-9B4CC14C87C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65A01FA7-3D49-436E-B791-9B4CC14C87C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65A01FA7-3D49-436E-B791-9B4CC14C87C4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

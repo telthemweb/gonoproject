@@ -1,0 +1,137 @@
+﻿@page "/visitorreports"
+@inject IReportService _service
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@attribute [StreamRendering]
+@attribute [Authorize]
+<PageTitle>System Visitor Reports</PageTitle>
+
+<MudContainer Class="mt-5px-5" MaxWidth="MaxWidth.False">
+    <MudPaper Class="mt-2 mb-2" Outlined="true">
+        <MudBreadcrumbs Items="_items">
+            <SeparatorTemplate>
+                <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Size="Size.Small" />
+            </SeparatorTemplate>
+        </MudBreadcrumbs>
+    </MudPaper>
+    <MudGrid Class="mt-5 mb-lg-5">
+        <MudItem xs="12" sm="12" md="12">
+            <MudGrid>
+                <MudItem xs="12" sm="12" md="4">
+                    <MudDatePicker Label="From Date" @bind-Date="fromDate" />
+                </MudItem>
+                <MudItem xs="12" sm="12" md="4">
+                    <MudDatePicker Label="To Date" @bind-Date="toDate" />
+                </MudItem>
+                <MudItem xs="12" sm="12" md="4">
+                    <MudButton OnClick="GetData" Color="Color.Primary">Apply Filter</MudButton>
+                </MudItem>
+            </MudGrid>
+
+            @if (visitors == null)
+            {
+                <MudSkeleton Width="100%" Height="30px" />
+                <MudSkeleton Width="100%" Height="30px" />
+                <MudSkeleton Width="100%" Height="30px" />
+            }
+            else
+            {
+                <MudTable Outlined="true" Items="@filteredlogs" Dense="@dense" Hover="@hover" Bordered="@bordered" Striped="@striped">
+                    <ToolBarContent>
+                        <MudText>SYSTEM VISITORS</MudText>
+                        <MudSpacer />
+                        <MudTextField @bind-Value="searchvisitorString" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                    </ToolBarContent>
+                    <HeaderContent>
+                        <MudTh>Ref#</MudTh>
+                        <MudTh>Title</MudTh>
+                        <MudTh>Name</MudTh>
+                        <MudTh>IDnumber</MudTh>
+                        <MudTh>Gender</MudTh>
+                        <MudTh>City</MudTh>
+                        <MudTh>Dob</MudTh>
+                        <MudTh>Marital</MudTh>
+                        <MudTh>Date</MudTh>
+                        <MudTh>Status</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Name">@context.VisitorNumber</MudTd>
+                        <MudTd DataLabel="Name">@context.Title?.Name</MudTd>
+                        <MudTd DataLabel="Name">@context.FullName</MudTd>
+                        <MudTd DataLabel="Name">@context.IDnumber</MudTd>
+                        <MudTd DataLabel="Name">@context.Gender?.Name</MudTd>
+                        <MudTd DataLabel="Name">@context.City?.Name</MudTd>
+                        <MudTd DataLabel="Name">@context.Dob</MudTd>
+                        <MudTd DataLabel="Name">@context.MaritalStatus?.Name</MudTd>
+                        <MudTd DataLabel="Name">@context.DateCreated.ToString("yyyy-MM-d")</MudTd>
+                        <MudTd DataLabel="Name">
+                            <MudChip Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" T="object">
+                                <MudText>ACTIVE</MudText>
+                            </MudChip>
+                        </MudTd>
+                       
+                    </RowTemplate>
+                    <PagerContent>
+                        <MudTablePager />
+                    </PagerContent>
+                </MudTable>
+            }
+        </MudItem>
+    </MudGrid>
+</MudContainer>
+
+@code {
+    private List<BreadcrumbItem> _items = new()
+    {
+        new BreadcrumbItem("Home", href: "/Home"),
+        new BreadcrumbItem("System Visitors Reports", href: null, disabled: true)
+    };
+
+    private bool dense = false;
+    private bool hover = true;
+    private bool striped = false;
+    private bool bordered = false;
+
+    private List<Visitor>? visitors;
+    private string searchvisitorString = "";
+
+    private DateTime? fromDate;
+    private DateTime? toDate;
+
+    private IEnumerable<Visitor> filteredlogs => visitors?.Where(item => FilterFunc(item, searchvisitorString)) ?? Enumerable.Empty<Visitor>();
+
+    private bool FilterFunc(Visitor element, string searchString)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+        if (element.FullName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.City.Name.ToString().Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.Gender.Name.ToString().Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.MaritalStatus.Name.ToString().Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.Province.Name.ToString().Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.Title.Name.ToString().Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (element.IDnumber.ToString().Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    }
+
+    private async Task GetData()
+    {
+        if (fromDate.HasValue && toDate.HasValue)
+        {
+            visitors = await _service.GetVisitorReports(fromDate, toDate);
+        }
+        else
+        {
+            Snackbar.Add("Please select a valid date range.", Severity.Warning);
+        }
+        StateHasChanged();
+    }
+}

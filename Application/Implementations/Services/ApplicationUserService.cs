@@ -3,7 +3,6 @@ using Application.Contracts.Persistence;
 using Application.Contracts.Services;
 using Application.Data;
 using Application.Dto.Users;
-using Application.Logs;
 using Application.Models;
 using AutoMapper;
 using Microsoft.AspNetCore.Identity;

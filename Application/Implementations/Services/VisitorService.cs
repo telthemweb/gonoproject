@@ -3,7 +3,6 @@ using Application.Contracts.Persistence;
 using Application.Contracts.Services;
 using Application.Data;
 using Application.Dto;
-using Application.Logs;
 using Application.Models;
 using AutoMapper;
 using System.Globalization;
@@ -82,6 +81,7 @@ namespace Application.Implementations.Services
             try
             {
                 var response = await _unitOfWork.visitorRepository.GetAsync(q => q.Id == id, new List<string> {
+                                                                                                "visitorlog",
                                                                                                 "Title",
                                                                                                 "Nationality",
                                                                                                 "Province",
@@ -106,6 +106,9 @@ namespace Application.Implementations.Services
             int num = 0;
             num = (int)nextCertificateNumber!;
             var resultd = responsed!.Prefix + num.ToString("D6");
+
+            responsed.LastNumber=num;
+            await _unitOfWork.visitornumberRepository.UpdateAsync(responsed);
             try
             {
                 int result = 0;

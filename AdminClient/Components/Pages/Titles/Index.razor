@@ -22,7 +22,7 @@
 }
 else
 {
-    <MudTable Outlined="true" Items="@filteredPaymentItems" Dense="@dense" Hover="@hover" Bordered="@bordered" Striped="@striped">
+   @*  <MudTable Outlined="true" Items="@filteredPaymentItems" Dense="@dense" Hover="@hover" Bordered="@bordered" Striped="@striped">
         <ToolBarContent>
             <MudTextField @bind-Value="searchString" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
             <MudSpacer />
@@ -41,7 +41,20 @@ else
         <PagerContent>
             <MudTablePager />
         </PagerContent>
-    </MudTable>
+    </MudTable> *@
+
+    <Tableui Items="@titles" stylesheet="width:100%!important" idTablename="title">
+        <KeryHeader>
+            <th>Name</th>
+            <th class="text-right"></th>
+        </KeryHeader>
+        <Itemtamplate>
+            <tr>
+                <td>@context.Name</td>
+                <td> <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Info" aria-label="edit" OnClick="() => EditDialog(context)"></MudIconButton></td>
+            </tr>
+        </Itemtamplate>
+    </Tableui>
 }
 
 @code {
@@ -89,7 +102,7 @@ else
         var dialog = await DialogService.ShowAsync<Add>(title, parameters, options);
         var result = await dialog.Result;
 
-        if (!result.Cancelled)
+        if (!result.Canceled)
         {
             if (bool.TryParse(result.Data.ToString(), out bool success) && success)
             {
@@ -110,7 +123,7 @@ else
         var dialog = await DialogService.ShowAsync<Add>(title, parameters, options);
         var result = await dialog.Result;
 
-        if (!result.Cancelled)
+        if (!result.Canceled)
         {
             if (bool.TryParse(result.Data.ToString(), out bool success) && success)
             {

@@ -12,5 +12,6 @@ namespace Application.Data
         public string? TimeCheckin { get; set; }
         public string? TimeCheckout { get; set; }
         public string? Status { get; set; }
+        public Visitor? visitor { get; set; }
     }
 }

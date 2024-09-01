@@ -117,7 +117,7 @@ else
         var dialog = await DialogService.ShowAsync<Add>(title, parameters, options);
         var result = await dialog.Result;
 
-        if (!result.Cancelled)
+        if (!result.Canceled)
         {
             if (bool.TryParse(result.Data.ToString(), out bool success) && success)
             {
@@ -151,7 +151,7 @@ else
         var dialog = await DialogService.ShowAsync<Add>(title, parameters, options);
         var result = await dialog.Result;
 
-        if (!result.Cancelled)
+        if (!result.Canceled)
         {
             if (bool.TryParse(result.Data.ToString(), out bool success) && success)
             {

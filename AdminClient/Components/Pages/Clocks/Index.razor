@@ -1,0 +1,149 @@
+﻿@page "/checkinandouts"
+@using Application.Dto
+@inject IVisitorLoggerService _service
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@attribute [StreamRendering]
+@attribute [Authorize]
+
+
+<MudPaper Class="mt-2 mb-2" Outlined="true">
+    <MudBreadcrumbs Items="_items">
+        <SeparatorTemplate>
+            <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Size="Size.Small" />
+        </SeparatorTemplate>
+    </MudBreadcrumbs>
+</MudPaper>
+@if (visitors == null)
+{
+    <MudSkeleton Width="100%" Height="30px" />
+    <MudSkeleton Width="100%" Height="30px" />
+    <MudSkeleton Width="100%" Height="30px" />
+}
+else
+{
+    <MudTable Outlined="true" Items="@filteredvisitors" Dense="@dense" Hover="@hover" Bordered="@bordered" Striped="@striped">
+        <ToolBarContent>
+            <MudTextField @bind-Value="searchString" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            <MudSpacer />
+        </ToolBarContent>
+        <HeaderContent>
+            <MudTh>Name</MudTh>
+            <MudTh>IsChecked</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Name">@context.FullName</MudTd>
+            <MudTd DataLabel="AssetName">
+                @if (context.checkins.Where(q => q.VisitorId == context.Id).FirstOrDefault() != null)
+                {
+                    <MudChip Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" T="object">
+                        <MudText>Checked In</MudText>
+                    </MudChip>
+                    
+                }
+            </MudTd>
+            <MudTd class="d-flex flex-row-reverse">
+                @if (context.checkins.Where(q => q.VisitorId == context.Id).FirstOrDefault() != null)
+                {
+                    <MudButton Variant="Variant.Filled" Size="Size.Small" Class="rounded-5" EndIcon="@Icons.Material.Outlined.Delete" Color="Color.Error" OnClick="() => CheckOutVisitor(context)">Checkout Visitor</MudButton>
+                }
+                else
+                {
+                    <MudButton Variant="Variant.Filled" Size="Size.Small" Class="rounded-5" EndIcon="@Icons.Material.Outlined.Add" Color="Color.Success" OnClick="() =>CheckInVisitor(context)">Checkin Visitor</MudButton>
+                }
+
+            </MudTd>
+        </RowTemplate>
+        <PagerContent>
+            <MudTablePager />
+        </PagerContent>
+    </MudTable>
+}
+
+@code {
+
+    private List<BreadcrumbItem> _items = new()
+    {
+        new BreadcrumbItem("Home", href: "/Clocks"),
+        new BreadcrumbItem("Check-in & Check-out", href: null, disabled: true)
+    };
+    private bool dense = false;
+    private bool hover = true;
+    private bool striped = false;
+    private bool bordered = false;
+    private string searchString = "";
+    private Visitor? selectedItem;
+
+    private VisitorLoggerModifyDto dto = new();
+    [Parameter]
+    public int assetid { get; set; }
+    private List<Visitor>? visitors;
+    private IEnumerable<Visitor> filteredvisitors => visitors?.Where(item => FilterFunc(item, searchString)) ?? Enumerable.Empty<Visitor>();
+
+    private bool FilterFunc(Visitor element, string searchString)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+        if (element.FullName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        return false;
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        GetData();
+        base.OnInitializedAsync();
+
+
+    }
+
+    private async Task CheckInVisitor(Visitor record)
+    {
+        var title = $"Check in {record.FullName}";
+        dto.VisitorId = record.Id;
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var parameters = new DialogParameters<Checkinform>
+        {
+                {x=>x.dto,dto}
+        };
+
+        var dialog = await DialogService.ShowAsync<Checkinform>(title, parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            if (bool.TryParse(result.Data.ToString(), out bool success) && success)
+            {
+                await GetData();
+            }
+        }
+    }
+    private async void CheckOutVisitor(Visitor record)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+           "CHECKOUT",
+           $"Are you sure you want to Checkout {record.FullName}",
+           yesText: "Yes return!", cancelText: "Cancel");
+        if ((bool)result)
+        {
+            dto.VisitorId = record.Id;
+            var response = await _service.CheckOutVisitor(dto);
+            if (response.Status == ResponseStatus.SUCCESS)
+            {
+                Snackbar.Add(response.Message, Severity.Success);
+                StateHasChanged();
+
+            }
+            else
+            {
+                Snackbar.Add(response.Message, Severity.Error);
+            }
+        }
+    }
+
+    private async Task GetData()
+    {
+        var response = await _service.GetVisitors();
+        visitors = response;
+        StateHasChanged();
+    }
+}

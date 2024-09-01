@@ -2,9 +2,11 @@
 @inject NavigationManager _Navigation;
 @inject AuthenticationStateProvider _authStateProvider;
 @inject ISystemmoduleService _service;
+
 <MudThemeProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
+<MudPopoverProvider />  <!-- Ensure this is added -->
 <MudLayout>
     <MudAppBar Elevation="0" Color="Color.Dark">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
@@ -13,10 +15,9 @@
             <Authorized>
                 <MudMenu FullWidth="true">
                     <ActivatorContent>
-                        <MudChip Icon="@Icons.Material.Filled.Person" Color="Color.Primary">Welcome : @Name</MudChip>
+                        <MudChip Icon="@Icons.Material.Filled.Person" Color="Color.Primary" T="object">Welcome : @Name</MudChip>
                     </ActivatorContent>
                     <ChildContent>
-                        @* <MudMenuItem Icon="@Icons.Material.Filled.PersonPin" Href="/myprofile">Profile</MudMenuItem> *@
                         <MudMenuItem Icon="@Icons.Material.Filled.Logout" OnClick="()=>Logout()">Sign Out</MudMenuItem>
                     </ChildContent>
                 </MudMenu>
@@ -35,8 +36,6 @@
         <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="my-5 pt-2">
             @Body
         </MudContainer>
-
-
     </MudMainContent>
 </MudLayout>
 
@@ -46,6 +45,7 @@
     bool _drawerOpen = true;
     private string Name { get; set; }
     private List<Systemmodule> modules { get; set; }
+
     void DrawerToggle()
     {
         _drawerOpen = !_drawerOpen;
@@ -68,19 +68,14 @@
         }
         catch (Exception ex)
         {
-
             _Navigation.NavigateTo("/Login", true);
         }
-
 
         base.OnInitializedAsync();
     }
 
     private async Task Logout()
     {
-        //var customAuthStateProvider = (CustomeAuthenticationStateProvider)_authStateProvider;
-        //await customAuthStateProvider.UpdateAuthenticationState(null);
         _Navigation.NavigateTo("/Login");
-
     }
 }

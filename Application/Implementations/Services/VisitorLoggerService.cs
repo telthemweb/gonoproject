@@ -48,6 +48,7 @@ namespace Application.Implementations.Services
                         Systemlog log = new Systemlog();
                         log.VisitorId = dto.VisitorId;
                         log.DateCheckin = currentDate.Date;
+                        log.Purposeofvisit=dto.Purposeofvisit;
                         log.TimeCheckin = checkin;
                         log.TimeCheckout = "";
                         log.Status = "CHECKIN";
@@ -64,7 +65,7 @@ namespace Application.Implementations.Services
             }
             catch (Exception ex)
             {
-
+                TelthemwebLogException.LogException(ex);
                 response.Status = ResponseStatus.ERROR;
                 response.Message = ex.Message;
             }
@@ -78,7 +79,7 @@ namespace Application.Implementations.Services
             {
                 int result = 0;
                 var currentDate = DateTime.Now;
-                var checkvisitor = await _unitOfWork.visitorloggerRepository.GetAsync(q => q.VisitorId == dto.VisitorId && q.DateCheckin.HasValue && q.DateCheckin.Value.Date == currentDate.Date);
+                var checkvisitor = await _unitOfWork.visitorloggerRepository.GetAsync(q => q.VisitorId == dto.VisitorId );
                 if (checkvisitor == null)
                 {
                     response.Status = ResponseStatus.ERROR;
@@ -88,15 +89,12 @@ namespace Application.Implementations.Services
                 {
                     var currentTime = DateTime.Now;
                     var checkout = currentTime.Hour + ":" + currentTime.Minute + ":" + currentTime.Second;
-                    var data = _mapper.Map<VisitorLogger>(dto);
-                    data.TimeCheckout = checkout;
-                    data.Status = "CHECKOUT";
-                    result = await _unitOfWork.visitorloggerRepository.AddAsync(data);
-                    response.Result = data;
+                     result = await _unitOfWork.visitorloggerRepository.RemoveAsync(checkvisitor);
                     if (result > 0)
                     {
                         Systemlog log = new Systemlog();
                         log.VisitorId = dto.VisitorId;
+                        log.Purposeofvisit = checkvisitor.Purposeofvisit;
                         log.DateCheckin = checkvisitor.DateCheckin;
                         log.TimeCheckin = checkvisitor.TimeCheckin;
                         log.TimeCheckout = checkout;
@@ -115,11 +113,36 @@ namespace Application.Implementations.Services
             }
             catch (Exception ex)
             {
-
+                TelthemwebLogException.LogException(ex);
                 response.Status = ResponseStatus.ERROR;
                 response.Message = ex.Message;
             }
             return response;
         }
+
+        public async Task<List<Visitor>> GetVisitors()
+        {
+            try
+            {
+                var response = await _unitOfWork.visitorRepository.GetAllAsync(new List<string>
+                    {
+                        "checkins",
+                       "Title",
+                        "Nationality",
+                        "Province",
+                        "Gender",
+                        "City",
+                        "MaritalStatus"
+                    });
+                return response.ToList();
+            }
+            catch (Exception ex)
+            {
+                TelthemwebLogException.LogException(ex);
+                throw;
+            }
+        }
+
+
     }
 }

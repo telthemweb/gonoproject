@@ -41,7 +41,9 @@ namespace Application
             services.AddScoped<IVisitorService, VisitorService>();
             services.AddScoped<IVisitorNumberService, VisitorNumberService>();
             services.AddScoped<IVisitorLoggerService, VisitorLoggerService>();
-            //VisitorLoggerService : 
+            services.AddScoped<IDashboardService, DashboardService>();
+            services.AddScoped<IReportService, ReportService>();
+
             return services;
         }
         public static IServiceCollection AddPersistanceServicesDependecy(this IServiceCollection services, IConfiguration configuration)

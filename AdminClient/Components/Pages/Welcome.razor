@@ -1,7 +1,41 @@
 ﻿@page "/"
 @layout PlainLayout
 @attribute [StreamRendering]
-<h3>Index</h3>
+
+<MudPaper Height="600px" Width="100%">
+    <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="hero-section" Style="background:grey;height:600px;color:white;text-align:center;background-size:cover;background-position:top;background-blend-mode: darken;
+">
+        <!-- Hero Section -->
+        <MudGrid Class="mt-lg-5 pt-lg-5">
+            <MudItem xs="12" md="12" Class="mt-lg-5 pt-lg-5">
+                <MudText Typo="Typo.h3" Class="mt-lg-5 ">PRINCE EDWARD HIGH SCHOOL</MudText>
+                <MudText Variant="Variant.Text" Class="mt-lg-5 pt-lg-5 mb-3" GutterBottom>
+                    HYBRID VISITOR MANAGEMENT SYSTEM
+                </MudText>
+                <MudButton Href="/Login" Variant="Variant.Filled" Color="Color.Primary" Style="margin: 5px;">Get Started</MudButton>
+                <MudText Variant="Variant.Text" Class="mt-lg-5 pt-lg-5" GutterBottom>
+                    Developed by Brighton Gono
+                </MudText>
+            </MudItem>
+        </MudGrid>
+    </MudContainer>
+</MudPaper>
+<MudContainer>
+
+   
+</MudContainer>
+<style>
+    .hero-section {
+        width:100%;
+        background-size: cover;
+        background-position: center;
+        padding: 60px 20px;
+    }
+
+    .about-section {
+        background-color: #f5f5f5;
+    }
+</style>
 
 @code {
 
